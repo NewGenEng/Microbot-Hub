@@ -167,4 +167,15 @@ public interface StallThievingConfig extends Config {
     default boolean dropPapayaFruit() {
         return false;
     }
+
+    @ConfigItem(
+            keyName = "dropStrangeFruit",
+            name = "Strange fruit",
+            description = "Drop strange fruit (ID: 464)",
+            section = fruitDropSection,
+            position = 10
+    )
+    default boolean dropStrangeFruit() {
+        return false;
+    }
 }

@@ -77,6 +77,9 @@ public class HosidiusFruitThievingSpot implements IStallThievingSpot {
         if (config.dropPapayaFruit()) {
             itemsToDrop.add(5972); // Papaya fruit
         }
+        if (config.dropStrangeFruit()) {
+            itemsToDrop.add(464); // Strange fruit
+        }
 
         return itemsToDrop.toArray(new Integer[0]);
     }
