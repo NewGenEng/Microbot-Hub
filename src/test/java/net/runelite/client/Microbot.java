@@ -9,17 +9,18 @@ import net.runelite.client.plugins.microbot.aiofighter.AIOFighterPlugin;
 import net.runelite.client.plugins.microbot.astralrc.AstralRunesPlugin;
 import net.runelite.client.plugins.microbot.autofishing.AutoFishingPlugin;
 import net.runelite.client.plugins.microbot.example.ExamplePlugin;
+import net.runelite.client.plugins.microbot.mke_wintertodt.MKE_WintertodtPlugin;
+import net.runelite.client.plugins.microbot.thievingstalls.StallThievingPlugin;
 
-public class Microbot
-{
+public class Microbot {
 
-	private static final Class<?>[] debugPlugins = {
-		AIOFighterPlugin.class
-	};
+    private static final Class<?>[] debugPlugins = {
+            AIOFighterPlugin.class,
+            StallThievingPlugin.class
+    };
 
-    public static void main(String[] args) throws Exception
-    {
-		List<Class<?>> _debugPlugins = Arrays.stream(debugPlugins).collect(Collectors.toList());
+    public static void main(String[] args) throws Exception {
+        List<Class<?>> _debugPlugins = Arrays.stream(debugPlugins).collect(Collectors.toList());
         RuneLiteDebug.pluginsToDebug.addAll(_debugPlugins);
         RuneLiteDebug.main(args);
     }

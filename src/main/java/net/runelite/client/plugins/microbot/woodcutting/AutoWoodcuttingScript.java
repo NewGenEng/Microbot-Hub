@@ -398,6 +398,8 @@ public class AutoWoodcuttingScript extends Script {
     }
 
     private void burnLog(AutoWoodcuttingConfig config) {
+        if (isFiremake()) return; // Prevent double-clicking if already burning
+
         WoodcuttingTree treeType = getActiveTree();
         WorldPoint fireSpot;
         boolean useCampfire = false;
