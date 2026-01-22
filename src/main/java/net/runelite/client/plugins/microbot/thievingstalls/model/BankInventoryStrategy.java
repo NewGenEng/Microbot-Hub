@@ -4,7 +4,9 @@ import lombok.AllArgsConstructor;
 import net.runelite.client.plugins.microbot.thievingstalls.StallThievingConfig;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 @AllArgsConstructor(onConstructor_ = @Inject)
 public class BankInventoryStrategy implements IInventoryStrategy {
@@ -41,10 +43,50 @@ public class BankInventoryStrategy implements IInventoryStrategy {
 
     private int[] getItemIdsToAlwaysDrop()
     {
-        if (config.alwaysDrop().isEmpty())
-        {
-            return new int[0];
+        List<Integer> itemsToDrop = new ArrayList<>();
+
+        // Add items from the alwaysDrop config string
+        if (!config.alwaysDrop().isEmpty()) {
+            Arrays.stream(config.alwaysDrop().split("\\s*,\\s*"))
+                    .mapToInt(Integer::parseInt)
+                    .forEach(itemsToDrop::add);
         }
-        return Arrays.stream(config.alwaysDrop().split("\\s*,\\s*")).mapToInt(Integer::parseInt).toArray();
+
+        // Check each fruit checkbox and add to drop list if selected
+        if (config.dropCookingApple()) {
+            itemsToDrop.add(1955); // Cooking apple
+        }
+        if (config.dropBanana()) {
+            itemsToDrop.add(1963); // Banana
+        }
+        if (config.dropStrawberry()) {
+            itemsToDrop.add(5504); // Strawberry
+        }
+        if (config.dropJangerberries()) {
+            itemsToDrop.add(247); // Jangerberries
+        }
+        if (config.dropLemon()) {
+            itemsToDrop.add(2102); // Lemon
+        }
+        if (config.dropRedberries()) {
+            itemsToDrop.add(1951); // Redberries
+        }
+        if (config.dropPineapple()) {
+            itemsToDrop.add(2114); // Pineapple
+        }
+        if (config.dropLime()) {
+            itemsToDrop.add(2120); // Lime
+        }
+        if (config.dropGolovanvaFruit()) {
+            itemsToDrop.add(19653); // Golovanova fruit top
+        }
+        if (config.dropPapayaFruit()) {
+            itemsToDrop.add(5972); // Papaya fruit
+        }
+        if (config.dropStrangeFruit()) {
+            itemsToDrop.add(464); // Strange fruit
+        }
+
+        return itemsToDrop.stream().mapToInt(Integer::intValue).toArray();
     }
 }
