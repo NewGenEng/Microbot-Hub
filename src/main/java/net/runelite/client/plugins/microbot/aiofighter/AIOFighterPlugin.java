@@ -55,7 +55,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @PluginDescriptor(
-        name = PluginDescriptor.Mocrosoft + "AIOdddddd Fighter",
+        name = PluginDescriptor.Mocrosoft + "AIO Fighter",
         authors = { "Mocrosoft", "See1Duck" },
         version = AIOFighterPlugin.version,
         minClientVersion = "2.0.7",
