@@ -199,4 +199,15 @@ Place the required coordinate in `dependencies.txt` and rebuild. If the plugin i
 2. Allow rapid iteration in the hub without risk to stability
 3. Make plugin setup and testing as simple as possible
 
+cd /c/Users/tanne/OneDrive/Desktop/Microbot-Hub
+./gradlew testcd /c/Users/tanne/OneDrive/Desktop/Microbot-Hub
+./gradlew test## MCP (Model Context Protocol)
+
+This repo doesn’t run an MCP host, but it includes a ready-to-copy MCP server definition for the community OSRS MCP server:
+
+- `tools/osrs-mcp/README.md`
+- `.mcp.json` (example MCP server registration)
+
+The server implementation lives here: https://github.com/JayArrowz/mcp-osrs
+
 ___

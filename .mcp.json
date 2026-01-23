@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "osrs": {
+      "command": "node",
+      "args": [
+        "C:/Users/tanne/OneDrive/Desktop/mcp-osrs/osrs-mcp/mcp-osrs/dist/index.js"
+      ],
+      "env": {}
+    }
+  }
+}
