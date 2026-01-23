@@ -14,6 +14,8 @@ import net.runelite.client.plugins.microbot.Script;
 import net.runelite.client.plugins.microbot.autofishing.enums.AutoFishingState;
 import net.runelite.client.plugins.microbot.autofishing.enums.Fish;
 import net.runelite.client.plugins.microbot.autofishing.enums.HarpoonType;
+import net.runelite.client.plugins.microbot.autofishing.enums.PreferredSpotDirection;
+import net.runelite.client.plugins.microbot.autofishing.enums.PreferredSpotOrigin;
 import net.runelite.client.plugins.microbot.util.antiban.Rs2Antiban;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.plugins.microbot.util.combat.Rs2Combat;
@@ -31,6 +33,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.Comparator;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.awt.event.KeyEvent;
@@ -47,10 +50,13 @@ public class AutoFishingScript extends Script {
     private WorldPoint fishingLocation;
     private String fishAction = "";
 
+    private boolean bankLocksToggledThisRun = false;
+
     public boolean run(AutoFishingConfig config) {
         this.config = config;
         this.selectedFish = config.fishToCatch();
         this.selectedHarpoon = config.harpoonSpec();
+        this.bankLocksToggledThisRun = false;
 
         Rs2Antiban.resetAntibanSettings();
         Rs2Antiban.antibanSetupTemplates.applyFishingSetup();
@@ -184,6 +190,13 @@ public class AutoFishingScript extends Script {
 
     private void handleDepositing() {
         if (Rs2Bank.walkToBankAndUseBank()) {
+            // Optional: only toggle locks once per script run, on the first time we use the bank.
+            if (config.toggleBankLocksOnceOnStart() && !bankLocksToggledThisRun) {
+                Rs2Bank.toggleAllLocks();
+                bankLocksToggledThisRun = true;
+                sleep(250, 450);
+            }
+
             if (Microbot.getVarbitValue(VarbitID.BANK_SIDE_SLOT_SHOWOP) != 1 ||
             Microbot.getVarbitValue(VarbitID.BANK_SIDE_SLOT_IGNOREINVLOCKS) != 0) {
                 Rs2Widget.clickWidget(InterfaceID.Bankmain.MENU_BUTTON);
@@ -225,7 +238,12 @@ public class AutoFishingScript extends Script {
             Rs2Bank.emptyFishBarrel();
             Rs2Bank.depositAll();
             sleepUntil(() -> !Rs2Inventory.isFull());
-            Rs2Bank.toggleAllLocks();
+
+            // Keep previous behavior unless the one-time toggle option is enabled.
+            if (!config.toggleBankLocksOnceOnStart()) {
+                Rs2Bank.toggleAllLocks();
+            }
+
             Rs2Bank.closeBank();
         }
     }
@@ -234,6 +252,7 @@ public class AutoFishingScript extends Script {
         if (Rs2Bank.isOpen()) Rs2Bank.closeBank();
         fishAction = "";
         fishingLocation = null;
+        bankLocksToggledThisRun = false;
     }
 
     /**
@@ -241,9 +260,119 @@ public class AutoFishingScript extends Script {
      */
     private Rs2NpcModel findNearestFishingSpot() {
         int[] spotIds = selectedFish.getFishingSpot();
-        return Rs2Npc.getNpcs(npc -> Arrays.stream(spotIds).anyMatch(id -> npc.getId() == id))
-                .findFirst()
+
+        List<Rs2NpcModel> candidates = Rs2Npc.getNpcs(npc -> Arrays.stream(spotIds).anyMatch(id -> npc.getId() == id))
+                .collect(Collectors.toList());
+
+        if (candidates.isEmpty()) {
+            return null;
+        }
+
+        // Default: nearest by distance
+        Rs2NpcModel nearest = candidates.stream()
+                .min(Comparator.comparingInt(npc -> Rs2Player.getWorldLocation().distanceTo(npc.getWorldLocation())))
                 .orElse(null);
+
+        if (!config.enableSpotPreference()) {
+            return nearest;
+        }
+
+        WorldPoint origin = getPreferenceOrigin();
+        PreferredSpotDirection preferredDirection = config.preferredSpotDirection();
+        int tolerance = Math.max(0, config.preferredSpotDirectionTolerance());
+
+        boolean useBounds = config.enableSpotCoordinateBounds();
+        int minX = config.preferredSpotMinX();
+        int maxX = config.preferredSpotMaxX();
+        int minY = config.preferredSpotMinY();
+        int maxY = config.preferredSpotMaxY();
+        int plane = config.preferredSpotPlane();
+
+        Comparator<Rs2NpcModel> byScoreThenDistance = Comparator
+                .<Rs2NpcModel>comparingInt(npc -> -getSpotPreferenceScore(npc, origin, preferredDirection, tolerance, useBounds, minX, maxX, minY, maxY, plane))
+                .thenComparingInt(npc -> Rs2Player.getWorldLocation().distanceTo(npc.getWorldLocation()));
+
+        Rs2NpcModel best = candidates.stream()
+                .sorted(byScoreThenDistance)
+                .findFirst()
+                .orElse(nearest);
+
+        // If none match preferences (score 0), fall back to nearest to preserve old behavior.
+        if (best != null && getSpotPreferenceScore(best, origin, preferredDirection, tolerance, useBounds, minX, maxX, minY, maxY, plane) == 0) {
+            return nearest;
+        }
+
+        return best;
+    }
+
+    private WorldPoint getPreferenceOrigin() {
+        PreferredSpotOrigin origin = config.preferredSpotOrigin();
+        if (origin == PreferredSpotOrigin.FISHING_LOCATION && fishingLocation != null) {
+            return fishingLocation;
+        }
+        return Rs2Player.getWorldLocation();
+    }
+
+    private int getSpotPreferenceScore(
+            Rs2NpcModel npc,
+            WorldPoint origin,
+            PreferredSpotDirection preferredDirection,
+            int tolerance,
+            boolean useBounds,
+            int minX,
+            int maxX,
+            int minY,
+            int maxY,
+            int plane) {
+
+        if (npc == null || npc.getWorldLocation() == null) {
+            return 0;
+        }
+
+        WorldPoint spotLoc = npc.getWorldLocation();
+
+        int score = 0;
+
+        if (useBounds && isValidBounds(minX, maxX, minY, maxY)) {
+            boolean planeOk = (plane < 0) || (spotLoc.getPlane() == plane);
+            boolean inBounds = planeOk
+                    && spotLoc.getX() >= minX && spotLoc.getX() <= maxX
+                    && spotLoc.getY() >= minY && spotLoc.getY() <= maxY;
+            if (inBounds) {
+                score += 100;
+            }
+        }
+
+        if (preferredDirection != null && preferredDirection != PreferredSpotDirection.ANY && origin != null) {
+            if (matchesDirection(origin, spotLoc, preferredDirection, tolerance)) {
+                score += 50;
+            }
+        }
+
+        return score;
+    }
+
+    private boolean isValidBounds(int minX, int maxX, int minY, int maxY) {
+        return minX > 0 && maxX > 0 && minY > 0 && maxY > 0 && minX <= maxX && minY <= maxY;
+    }
+
+    private boolean matchesDirection(WorldPoint origin, WorldPoint target, PreferredSpotDirection direction, int tolerance) {
+        int dx = target.getX() - origin.getX();
+        int dy = target.getY() - origin.getY();
+
+        switch (direction) {
+            case NORTH:
+                return dy > tolerance && Math.abs(dy) >= Math.abs(dx);
+            case SOUTH:
+                return dy < -tolerance && Math.abs(dy) >= Math.abs(dx);
+            case EAST:
+                return dx > tolerance && Math.abs(dx) >= Math.abs(dy);
+            case WEST:
+                return dx < -tolerance && Math.abs(dx) >= Math.abs(dy);
+            case ANY:
+            default:
+                return true;
+        }
     }
 
     private List<String> getRawFishInInventory() {
@@ -310,5 +439,7 @@ public class AutoFishingScript extends Script {
         if (Rs2Bank.isOpen()) Rs2Bank.closeBank();
         this.fishingLocation = null;
         this.fishAction = "";
+        this.bankLocksToggledThisRun = false;
     }
 }
+

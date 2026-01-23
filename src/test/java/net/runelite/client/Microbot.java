@@ -16,7 +16,7 @@ public class Microbot {
 
     private static final Class<?>[] debugPlugins = {
             AIOFighterPlugin.class,
-            StallThievingPlugin.class
+            AutoFishingPlugin.class
     };
 
     public static void main(String[] args) throws Exception {
