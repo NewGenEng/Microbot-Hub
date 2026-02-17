@@ -34,6 +34,7 @@ public class RoguesDenScript extends Script {
     int currentObstacleIndex;
     boolean hasStaminaPotionInBank = true;
     boolean hasEnergyPotionInBank = true;
+    boolean hasStrangeFruitInBank = true;
 
     boolean init = false;
 
@@ -160,6 +161,7 @@ public class RoguesDenScript extends Script {
                     currentObstacleIndex = 0;
 
                     if (storeAllItemsInBank()) return;
+                    if (useStrangeFruit()) return;
                     if (useEnergyPotions()) return;
                     if (useStaminaPotion()) return;
 
@@ -313,6 +315,62 @@ public class RoguesDenScript extends Script {
                     hasEnergyPotionInBank = false;
                     Microbot.log("No energy potion potion found in the bank. Continue without it...");
                 }
+                Rs2Bank.depositAll();
+                sleepGaussian(600, 150);
+            }
+        }
+        return false;
+    }
+
+    private boolean useStrangeFruit() {
+        // Strange fruit restores run energy, so treat it like a cheap alternative to energy potions.
+        // Eat enough to get close to full so we don't bank repeatedly.
+        final int targetRunEnergy = 90;
+
+        // Strange fruit restores 30 run energy (capped at 100). If that ever changes,
+        // we still stop early once we hit the target.
+        final int assumedRestorePerFruit = 30;
+        final int maxFruitToWithdraw = 10; // safety cap
+
+        while (Rs2Player.getRunEnergy() < targetRunEnergy && hasStrangeFruitInBank) {
+            Microbot.log("Looking to withdraw strange fruit...");
+            if (Rs2Bank.openBank()) {
+                if (!Rs2Bank.isOpen()) return true;
+
+                if (Rs2Bank.hasItem("strange fruit")) {
+                    int currentEnergy = Rs2Player.getRunEnergy();
+                    int neededEnergy = Math.max(0, targetRunEnergy - currentEnergy);
+                    int fruitNeeded = (int) Math.ceil(neededEnergy / (double) assumedRestorePerFruit);
+                    fruitNeeded = Math.max(1, Math.min(maxFruitToWithdraw, fruitNeeded));
+
+                    // Withdraw in one go (requested). If withdrawX fails for any reason,
+                    // fall back to withdrawOne so we don't get stuck.
+                    if (fruitNeeded == 1) {
+                        Rs2Bank.withdrawOne("strange fruit");
+                    } else if (!Rs2Bank.withdrawX("strange fruit", fruitNeeded)) {
+                        Rs2Bank.withdrawOne("strange fruit");
+                    }
+
+                    Rs2Inventory.waitForInventoryChanges(2000);
+
+                    int eats = 0;
+                    while (Rs2Inventory.hasItem("strange fruit")
+                            && Rs2Player.getRunEnergy() < targetRunEnergy
+                            && eats < maxFruitToWithdraw) {
+                        Rs2Inventory.interact("strange fruit", "eat");
+                        Rs2Inventory.waitForInventoryChanges(2000);
+                        sleepGaussian(450, 125);
+                        eats++;
+                    }
+
+                    if (Rs2Player.getRunEnergy() >= targetRunEnergy) {
+                        return true;
+                    }
+                } else {
+                    hasStrangeFruitInBank = false;
+                    Microbot.log("No strange fruit found in the bank. Continue without it...");
+                }
+
                 Rs2Bank.depositAll();
                 sleepGaussian(600, 150);
             }
