@@ -70,26 +70,7 @@ public class PlayerMonitorScript extends Script {
                                                 logoutPlayer();
                                                 break;
                                             case HOP_WORLDS:
-                                                ClientUI.getClient().setEnabled(false);
-                                                if (this.isRunning()) {
-                                                    sleep(61, 93);
-                                                }
-                                                if (this.isRunning()) {
-                                                    Microbot.getClient().openWorldHopper();
-                                                }
-                                                if (this.isRunning()) {
-                                                    sleepUntil(() -> Rs2Widget.hasWidget("Current world - " + Rs2Player.getWorld()));
-                                                }
-                                                if (this.isRunning()) {
-                                                    sleep(61, 93);
-                                                }
-                                                if (this.isRunning()) {
-                                                    Microbot.hopToWorld(Login.getRandomWorld(Rs2Player.isMember()));
-                                                }
-                                                if (this.isRunning()) {
-                                                    sleep(61, 93);
-                                                }
-                                                ClientUI.getClient().setEnabled(true);
+                                                hopWorlds();
                                                 break;
                                             case USE_ITEM:
                                                 ClientUI.getClient().setEnabled(false);
@@ -142,6 +123,19 @@ public class PlayerMonitorScript extends Script {
                         logoutInitiated = false;
                     }
                 }
+                if (config.grindMode()) {
+                    if (plugin.isPlayerDetected() && !logoutInitiated) {
+                        log.info("Player detected (Grind_Mode) - hopping worlds");
+                        Microbot.log("PlayerMonitorGrind: Player detected - hopping worlds");
+                        logoutInitiated = true;
+                        Microbot.getClientThread().runOnSeperateThread(() -> {
+                            hopWorlds();
+                            return true;
+                        });
+                    } else if (!plugin.isPlayerDetected() && logoutInitiated) {
+                        logoutInitiated = false;
+                    }
+                }
 
             } catch (Exception ex) {
                 Microbot.log(ex.getMessage());
@@ -156,6 +150,29 @@ public class PlayerMonitorScript extends Script {
             Rs2Player.logout();
             ClientUI.getClient().setEnabled(true);
         });
+    }
+
+    private void hopWorlds() {
+        ClientUI.getClient().setEnabled(false);
+        if (this.isRunning()) {
+            sleep(61, 93);
+        }
+        if (this.isRunning()) {
+            Microbot.getClient().openWorldHopper();
+        }
+        if (this.isRunning()) {
+            sleepUntil(() -> Rs2Widget.hasWidget("Current world - " + Rs2Player.getWorld()));
+        }
+        if (this.isRunning()) {
+            sleep(61, 93);
+        }
+        if (this.isRunning()) {
+            Microbot.hopToWorld(Login.getRandomWorld(Rs2Player.isMember()));
+        }
+        if (this.isRunning()) {
+            sleep(61, 93);
+        }
+        ClientUI.getClient().setEnabled(true);
     }
 
     @Override

@@ -35,7 +35,9 @@ import java.awt.*;
    default boolean ignoreFriendsChat() { return false; }
    @ConfigItem(keyName = "ignoreIgnored", name = "Ignore 'ignore list'", description = "Do not alarm for players on your ignore list", position = 6, section = playerAlarm)
    default boolean ignoreIgnored() { return false; }
-   @ConfigItem(keyName = "timeoutToIgnore", name = "Timeout", description = "Ignores players after they've been present for the specified time (in seconds). A value of 0 means players won't be ignored regardless of how long they are present.", position = 7, section = playerAlarm)
+   @ConfigItem(keyName = "ignorePlayerNames", name = "Ignore player names", description = "Comma-separated player names to ignore", position = 7, section = playerAlarm)
+   default String ignorePlayerNames() { return ""; }
+   @ConfigItem(keyName = "timeoutToIgnore", name = "Timeout", description = "Ignores players after they've been present for the specified time (in seconds). A value of 0 means players won't be ignored regardless of how long they are present.", position = 8, section = playerAlarm)
    default int timeoutToIgnore() { return 0; }
    @ConfigItem(keyName = "useFlash", name = "Use Flash?", description = "Toggle the screen flash effect", position = 0, section = playerAlarm)
    default boolean useFlash() { return true; }
@@ -80,4 +82,6 @@ import java.awt.*;
    default SoundEffectID mouseAlarmSound() { return SoundEffectID.ATTACK_HIT; }
    @ConfigItem(keyName = "combatLevelRange", name = "LITE_MODE", description = "Logs out if someone in radius can attack you", position = 16, section = playerAlarm)
    default boolean liteMode() { return false;}
+   @ConfigItem(keyName = "grindMode", name = "Grind_Mode", description = "Only hop worlds if another player can attack you based on wilderness level and combat range", position = 17, section = playerAlarm)
+   default boolean grindMode() { return false;}
  }

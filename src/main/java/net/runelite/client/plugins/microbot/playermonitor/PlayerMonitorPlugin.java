@@ -21,6 +21,7 @@ import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.PluginConstants;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
 import net.runelite.client.plugins.microbot.util.player.Rs2PlayerModel;
+import net.runelite.client.plugins.microbot.util.player.Rs2Pvp;
 import net.runelite.client.ui.overlay.OverlayManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +38,7 @@ import java.util.Scanner;
 import java.util.stream.Collectors;
 
  @PluginDescriptor(
-        version = "1.0.4",
+        version = "1.0.5",
         name = PluginDescriptor.eXioStorm + "Player Monitor",
         enabledByDefault = false,
         minClientVersion = "2.0.0",
@@ -122,19 +123,19 @@ import java.util.stream.Collectors;
    }
 
    protected void startUp() throws Exception {
-     if(!config.liteMode()){
+     if(!config.liteMode() && !config.grindMode()){
      overlayManager.add(mouseOverlay);
      loadMouseClicks();
      this.mouseListener = new MouseListener(this.client);
      this.mouseManager.registerMouseListener((net.runelite.client.input.MouseListener) this.mouseListener);
      this.previousClickTime=System.currentTimeMillis();
      playerMonitorScript.run(config, overlayManager);}
-     if(config.liteMode()){playerMonitorScript.run(config, overlayManager);}
+     if(config.liteMode() || config.grindMode()){playerMonitorScript.run(config, overlayManager);}
    }
 
    @Subscribe
    public void onClientTick(ClientTick clientTick) {
-     if(!config.liteMode()) {
+     if(!config.liteMode() && !config.grindMode()) {
      List<Player> dangerousPlayers = getPlayersInRange().stream().filter(this::shouldPlayerTriggerAlarm).collect(Collectors.toList());
      if (this.config.timeoutToIgnore() > 0)
      { updatePlayersInRange(); }
@@ -147,31 +148,65 @@ import java.util.stream.Collectors;
      if (!shouldAlarm) {
        this.overlayOn = false;
      } }
-      if(config.liteMode()) {
+      if(config.grindMode()) {
         if (client.getGameState() != GameState.LOGGED_IN) {
           if (playerDetected) {
             playerDetected = false;
-            //log.debug("Not logged in, player detection disabled");
           }
           return;
         }
 
-        // Check if there are dangerous players nearby
-        playerDetected = isDangerousPlayerNearby();
+        playerDetected = isDangerousPlayerNearbyInWildernessRange();
 
-        // Log state changes to avoid spamming logs
         if (playerDetected != wasPlayerDetected) {
           if (playerDetected) {
-            log.info("Dangerous player detected!");
-            Microbot.log("PlayerMonitorLite: Dangerous player detected!");
+            log.info("Dangerous player detected (Grind_Mode)!");
+            Microbot.log("PlayerMonitorGrind: Dangerous player detected!");
           } else {
-            log.debug("No dangerous players detected");
+            log.debug("No dangerous players detected (Grind_Mode)");
           }
           wasPlayerDetected = playerDetected;
         }
-      }
+      } else if(config.liteMode()) {
+       if (client.getGameState() != GameState.LOGGED_IN) {
+         if (playerDetected) {
+           playerDetected = false;
+           //log.debug("Not logged in, player detection disabled");
+         }
+         return;
+       }
+
+       // Check if there are dangerous players nearby
+       playerDetected = isDangerousPlayerNearby();
+
+       // Log state changes to avoid spamming logs
+       if (playerDetected != wasPlayerDetected) {
+         if (playerDetected) {
+           log.info("Dangerous player detected!");
+           Microbot.log("PlayerMonitorLite: Dangerous player detected!");
+         } else {
+           log.debug("No dangerous players detected");
+         }
+         wasPlayerDetected = playerDetected;
+       }
+     }
+    }
+   private boolean isDangerousPlayerNearbyInWildernessRange() {
+     int wildernessLevel = Rs2Pvp.getWildernessLevelFrom(Rs2Player.getWorldLocation());
+     if (wildernessLevel <= 0) {
+       return false;
      }
 
+     List<Player> candidates = getPlayersInRange().stream().filter(this::shouldPlayerTriggerAlarm).collect(Collectors.toList());
+     int localCombatLevel = client.getLocalPlayer().getCombatLevel();
+     for (Player player : candidates) {
+       int combatDelta = Math.abs(localCombatLevel - player.getCombatLevel());
+       if (combatDelta <= wildernessLevel) {
+         return true;
+       }
+     }
+     return false;
+   }
    private List<Player> getPlayersInRange() {
      LocalPoint currentPosition = this.client.getLocalPlayer().getLocalLocation();
      return this.client.getPlayers()
@@ -181,6 +216,8 @@ import java.util.stream.Collectors;
    }
    private boolean shouldPlayerTriggerAlarm(Player player) {
      if (player.getId() == this.client.getLocalPlayer().getId())
+     { return false; }
+     if (isPlayerNameIgnored(player.getName()))
      { return false; }
      if (this.config.ignoreClan() && player.isClanMember())
      { return false; }
@@ -197,6 +234,19 @@ import java.util.stream.Collectors;
      return true;
    }
 
+   private boolean isPlayerNameIgnored(String playerName) {
+     String ignoredNames = this.config.ignorePlayerNames();
+     if (ignoredNames == null || ignoredNames.trim().isEmpty() || playerName == null) {
+       return false;
+     }
+     String normalizedPlayer = playerName.trim().toLowerCase();
+     for (String ignored : ignoredNames.split(",")) {
+       if (normalizedPlayer.equals(ignored.trim().toLowerCase())) {
+         return true;
+       }
+     }
+     return false;
+   }
      private void updatePlayersInRange() {
      List<Player> playersInRange = getPlayersInRange();
      for (Player player : playersInRange) {
@@ -319,5 +369,3 @@ import java.util.stream.Collectors;
    }
 
  }
-
-
