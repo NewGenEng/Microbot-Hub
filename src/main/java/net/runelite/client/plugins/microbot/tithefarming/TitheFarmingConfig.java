@@ -8,7 +8,7 @@ import net.runelite.client.plugins.microbot.tithefarming.enums.TitheFarmLanes;
 "• Start at the entrance near the table to get seeds.<br />" +
 "• Have these items in your inventory:<br/>" +
 "&nbsp;&nbsp;8x Watering Can(8) or the Gricoller's Can.<br/>" +
-"&nbsp;&nbsp;Seed dibber.<br />" +
+"&nbsp;&nbsp;Seed dibber (unless Barb farming is enabled).<br />" +
 "&nbsp;&nbsp;Spade.<br />" +
 "&nbsp;&nbsp;Stamina potions (optional)<br /><br />" +
 "• Make sure to have the tithe farm plugin from runelite enabled.<br />" +
@@ -49,10 +49,21 @@ public interface TitheFarmingConfig extends Config {
     }
 
     @ConfigItem(
+            keyName = "barbFarming",
+            name = "Barb farming (no seed dibber)",
+            description = "Enable barb farming to skip the seed dibber requirement",
+            position = 2,
+            section = scriptSettings
+    )
+    default boolean barbFarming() {
+        return false;
+    }
+
+    @ConfigItem(
             keyName = "Gricoller's can refill threshold",
             name = "Gricoller's can refill threshold",
             description = "Percentage before refilling the gricoller's can",
-            position = 2,
+            position = 3,
             section = scriptSettings
     )
     default int gricollerCanRefillThreshold() {
@@ -63,7 +74,7 @@ public interface TitheFarmingConfig extends Config {
             keyName = "Sleep after planting seed",
             name = "Sleep after planting seed",
             description = "Sleep after planting seed - changing this value might result in unexpected behavior",
-            position = 3,
+            position = 4,
             section = scriptSettings
     )
     default int sleepAfterPlantingSeed() {
@@ -74,7 +85,7 @@ public interface TitheFarmingConfig extends Config {
             keyName = "Sleep after watering seed",
             name = "Sleep after watering seed",
             description = "Sleep after watering seed - changing this value might result in unexpected behavior",
-            position = 4,
+            position = 5,
             section = scriptSettings
     )
     default int sleepAfterWateringSeed() {
@@ -85,7 +96,7 @@ public interface TitheFarmingConfig extends Config {
             keyName = "Sleep after harvesting seed",
             name = "Sleep after harvesting seed",
             description = "Sleep after harvesting seed - changing this value might result in unexpected behavior",
-            position = 5,
+            position = 6,
             section = scriptSettings
     )
     default int sleepAfterHarvestingSeed() {
@@ -96,7 +107,7 @@ public interface TitheFarmingConfig extends Config {
             keyName = "enableAntiban",
             name = "Enable Antiban Features",
             description = "Will enable features like natural mouse movements and such.",
-            position = 6,
+            position = 7,
             section = scriptSettings
     )
     default boolean enableAntiban() {

@@ -232,7 +232,7 @@ public class TitheFarmingScript extends Script {
                         Rs2Player.toggleRunEnergy(true);
                         Rs2Tab.switchTo(InterfaceTab.INVENTORY);
                         init(config);
-                        validateInventory();
+                        validateInventory(config);
                         DropFertiliser();
                         validateRunEnergy();
                         if (state != RECHARING_RUN_ENERGY)
@@ -368,9 +368,13 @@ public class TitheFarmingScript extends Script {
     }
 
         // Helper method to validate inventory items
-        private void validateInventory() {
-            if (!Rs2Inventory.hasItem(ItemID.DIBBER) || !Rs2Inventory.hasItem(ItemID.SPADE)) {
-                Microbot.showMessage("You need a seed dibber and a spade in your inventory!");
+        private void validateInventory(TitheFarmingConfig config) {
+            if (!config.barbFarming() && !Rs2Inventory.hasItem(ItemID.DIBBER)) {
+                Microbot.showMessage("You need a seed dibber in your inventory (or enable Barb farming)!");
+                shutdown();
+            }
+            if (!Rs2Inventory.hasItem(ItemID.SPADE)) {
+                Microbot.showMessage("You need a spade in your inventory!");
                 shutdown();
             }
             if (!Rs2Inventory.hasItemAmount("watering can", WATERING_CANS_AMOUNT) && !Rs2Inventory.hasItem(ItemID.ZEAH_WATERINGCAN)) {
