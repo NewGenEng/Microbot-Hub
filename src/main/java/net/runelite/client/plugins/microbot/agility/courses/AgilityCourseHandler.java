@@ -82,7 +82,7 @@ public interface AgilityCourseHandler
 	default boolean shouldClickObstacle(final int currentXp, final int lastXp)
 	{
 		// If animating/moving
-		if (Rs2Player.isAnimating() || Rs2Player.isMoving())
+		if ((Rs2Player.isAnimating() || Rs2Player.isMoving()) && getCurrentObstacleIndex() > 0)
 		{
 			// Only click if we got XP (signals completion)
 			return currentXp > lastXp;

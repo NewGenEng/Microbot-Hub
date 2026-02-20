@@ -51,19 +51,20 @@ public class SeersCourse implements AgilityCourseHandler
 			return false;
 		}
 
+		int tiles = 15;
 		if (Microbot.getVarbitValue(VarbitID.KANDARIN_DIARY_HARD_COMPLETE) == 1
 			&& Rs2Magic.hasRequiredRunes(Rs2Spells.CAMELOT_TELEPORT)
-			&& playerWorldLocation.distanceTo(getStartPoint()) > 12)
+			&& playerWorldLocation.distanceTo(getStartPoint()) > tiles)
 
 		{
 			Rs2Magic.cast(Rs2Spells.CAMELOT_TELEPORT, "Seers'", 2);
 			return Global.sleepUntil(() -> {
 				WorldPoint currentLocation = Microbot.getClient().getLocalPlayer().getWorldLocation();
-				return currentLocation.distanceTo(getStartPoint()) <= 12;
+				return currentLocation.distanceTo(getStartPoint()) <= tiles;
 			}, 5000);
 		}
 
-		if (playerWorldLocation.distanceTo(getStartPoint()) > 12)
+		if (playerWorldLocation.distanceTo(getStartPoint()) > tiles)
 		{
 			Microbot.log("Going back to course's starting point");
 			Rs2Walker.walkTo(getStartPoint(), 2);

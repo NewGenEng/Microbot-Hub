@@ -9,6 +9,7 @@ import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
 import net.runelite.client.plugins.microbot.util.security.Login;
 import net.runelite.client.plugins.microbot.util.widget.Rs2Widget;
+import net.runelite.client.plugins.prayer.PrayerPlugin;
 import net.runelite.client.ui.ClientUI;
 import net.runelite.client.ui.overlay.OverlayManager;
 import org.slf4j.Logger;
@@ -70,6 +71,7 @@ public class PlayerMonitorScript extends Script {
                                                 logoutPlayer();
                                                 break;
                                             case HOP_WORLDS:
+                                                Microbot.stopPlugin(PrayerPlugin.class);
                                                 ClientUI.getClient().setEnabled(false);
                                                 if (this.isRunning()) {
                                                     sleep(61, 93);
