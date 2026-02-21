@@ -113,21 +113,10 @@ public interface ChatbotConfig extends Config {
 	}
 
 	@ConfigItem(
-		keyName = "listenPrivateChat",
-		name = "Private Messages",
-		description = "Listen and respond to private messages",
-		position = 1,
-		section = chatSourceSection
-	)
-	default boolean listenPrivateChat() {
-		return false;
-	}
-
-	@ConfigItem(
 		keyName = "listenClanChat",
 		name = "Clan Chat",
 		description = "Listen and respond to clan chat messages",
-		position = 2,
+		position = 1,
 		section = chatSourceSection
 	)
 	default boolean listenClanChat() {
@@ -138,7 +127,7 @@ public interface ChatbotConfig extends Config {
 		keyName = "listenFriendsChat",
 		name = "Friends Chat",
 		description = "Listen and respond to friends chat messages",
-		position = 3,
+		position = 2,
 		section = chatSourceSection
 	)
 	default boolean listenFriendsChat() {

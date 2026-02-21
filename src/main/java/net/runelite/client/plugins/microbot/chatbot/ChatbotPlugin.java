@@ -22,15 +22,13 @@ import java.awt.*;
 	authors = { "Mocrosoft" },
 	version = ChatbotPlugin.version,
 	minClientVersion = "1.9.8",
-	disable = true,
 	enabledByDefault = PluginConstants.DEFAULT_ENABLED,
 	isExternal = PluginConstants.IS_EXTERNAL
 )
-
 @Slf4j
 public class ChatbotPlugin extends Plugin {
 
-	static final String version = "1.2.0";
+    static final String version = "1.2.3";
 
     @Inject
     private ChatbotConfig config;
@@ -83,9 +81,7 @@ public class ChatbotPlugin extends Plugin {
                 break;
             case PRIVATECHAT:
             case PRIVATECHATOUT:
-                if (!config.listenPrivateChat()) return;
-                chatType = "private";
-                break;
+                return;
             case CLAN_CHAT:
             case CLAN_GIM_CHAT:
             case CLAN_GUEST_CHAT:

@@ -220,7 +220,9 @@ public class ChatbotScript extends Script {
                 sleep(delay);
 
                 // Send the response in-game
-                if (config.respondViaPublic()) {
+                if ("clan".equalsIgnoreCase(incoming.chatType)) {
+                    sendClanMessage(response);
+                } else if (config.respondViaPublic()) {
                     sendPublicMessage(response);
                 }
 
@@ -242,6 +244,16 @@ public class ChatbotScript extends Script {
      */
     private void sendPublicMessage(String message) {
         Rs2Keyboard.typeString(message);
+        sleep(200, 400);
+        Rs2Keyboard.enter();
+    }
+
+    /**
+     * Sends a clan chat message.
+     */
+    private void sendClanMessage(String message) {
+        String clanCommand = "/c " + message;
+        Rs2Keyboard.typeString(clanCommand);
         sleep(200, 400);
         Rs2Keyboard.enter();
     }
